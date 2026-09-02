@@ -2,13 +2,14 @@
 
 # Processes one selected merchant's disbursement as an independent unit of work.
 class ProcessMerchantDisbursement
-  def self.call(merchant, date)
-    new(merchant, date).call
+  def self.call(merchant, date, commission_calculator: CommissionCalculator)
+    new(merchant, date, commission_calculator:).call
   end
 
-  def initialize(merchant, date)
+  def initialize(merchant, date, commission_calculator:)
     @merchant = merchant
     @date = date
+    @commission_calculator = commission_calculator
   end
 
   def call
@@ -51,8 +52,6 @@ class ProcessMerchantDisbursement
   end
 
   def process_order(order, disbursement)
-    # One percent of an amount in cents is divided by 100; ceildiv applies the
-    # required upward rounding while keeping the calculation entirely integral.
-    order.update!(disbursement:, fee_cents: order.amount_cents.ceildiv(100))
+    order.update!(disbursement:, fee_cents: @commission_calculator.call(order.amount_cents))
   end
 end

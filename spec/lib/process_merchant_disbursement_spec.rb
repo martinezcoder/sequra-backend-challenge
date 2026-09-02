@@ -30,8 +30,8 @@ RSpec.describe ProcessMerchantDisbursement do
         expect(orders.map { |order| order.reload.disbursement }).to all(eq(merchant.disbursements.first))
       end
 
-      it "persists the one-percent fees rounded up to cents" do
-        expect(orders.map { |order| order.reload.fee_cents }).to eq([103, 434])
+      it "persists amount-based fees rounded up to cents" do
+        expect(orders.map { |order| order.reload.fee_cents }).to eq([98, 369])
       end
     end
 
@@ -110,8 +110,22 @@ RSpec.describe ProcessMerchantDisbursement do
         expect(merchant.disbursements.count).to eq(1)
         expect(order.reload).to have_attributes(
           disbursement: merchant.disbursements.first,
-          fee_cents: 103
+          fee_cents: 98
         )
+      end
+    end
+
+    context "when a commission calculator is injected" do
+      let(:commission_calculator) { class_double(CommissionCalculator, call: 77) }
+      let!(:order) do
+        create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: processing_date)
+      end
+
+      it "uses it to determine the persisted fee", :aggregate_failures do
+        described_class.call(merchant, processing_date, commission_calculator:)
+
+        expect(commission_calculator).to have_received(:call).with(10_229)
+        expect(order.reload.fee_cents).to eq(77)
       end
     end
   end
