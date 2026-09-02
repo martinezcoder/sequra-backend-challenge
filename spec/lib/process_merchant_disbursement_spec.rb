@@ -117,28 +117,27 @@ RSpec.describe ProcessMerchantDisbursement do
   end
 
   describe "merchant consistency" do
-    subject(:processor) { described_class.new(merchant, processing_date) }
-
-    let(:eligible_orders) { MerchantOrder.where(merchant:, ordered_on: processing_date) }
+    let(:existing_disbursement) do
+      create(:disbursement, merchant:, disbursed_on: processing_date - 1)
+    end
     let!(:orders) do
       [
         create(:merchant_order, merchant:, ordered_on: processing_date),
-        create(:merchant_order, merchant:, ordered_on: processing_date)
+        create(
+          :merchant_order,
+          merchant:,
+          ordered_on: processing_date,
+          disbursement: existing_disbursement,
+          fee_cents: 77
+        )
       ]
     end
 
-    before do
-      allow(eligible_orders).to receive(:find_each).and_yield(orders.first).and_yield(orders.last)
-      allow(MerchantOrder).to receive(:where)
-        .with(merchant:, ordered_on: processing_date)
-        .and_return(eligible_orders)
-      allow(orders.last).to receive(:update!).and_raise("processing failed")
-    end
-
-    it "rolls back partial processing when an order fails", :aggregate_failures do
-      expect { processor.call }.to raise_error("processing failed")
-      expect(Disbursement.exists?(merchant:)).to be(false)
+    it "fails atomically rather than moving an order between disbursements", :aggregate_failures do
+      expect { described_class.call(merchant, processing_date) }.to raise_error(ActiveRecord::RecordInvalid)
+      expect(Disbursement.exists?(merchant:, disbursed_on: processing_date)).to be(false)
       expect(orders.first.reload).to have_attributes(disbursement: nil, fee_cents: nil)
+      expect(orders.last.reload).to have_attributes(disbursement: existing_disbursement, fee_cents: 77)
     end
   end
 end

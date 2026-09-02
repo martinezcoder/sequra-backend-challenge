@@ -34,6 +34,18 @@ RSpec.describe MerchantOrder do
     it "persists its commission fee in cents" do
       expect(merchant_order.reload.fee_cents).to eq(102)
     end
+
+    context "when reassignment to another disbursement is attempted" do
+      let(:other_disbursement) do
+        create(:disbursement, merchant:, disbursed_on: disbursement.disbursed_on + 1)
+      end
+
+      it "rejects the reassignment and preserves the original association", :aggregate_failures do
+        expect { merchant_order.update!(disbursement: other_disbursement) }
+          .to raise_error(ActiveRecord::RecordInvalid)
+        expect(merchant_order.reload.disbursement).to eq(disbursement)
+      end
+    end
   end
 
   context "when an external identifier is duplicated" do
