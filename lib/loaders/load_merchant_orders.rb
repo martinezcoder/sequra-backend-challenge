@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# Synchronizes merchant reference data atomically from its external CSV source.
-class LoadMerchants
+# Synchronizes merchant orders atomically from their external CSV source.
+class LoadMerchantOrders
   def self.call(path)
     new(path).call
   end
@@ -25,26 +25,25 @@ class LoadMerchants
   private
 
   def import(row, line)
-    merchant = Merchant.find_or_initialize_by(external_id: row["id"])
-    merchant.assign_attributes(merchant_attributes(row))
-    merchant.save!
+    merchant = Merchant.find_by!(reference: row["merchant_reference"])
+    merchant_order = MerchantOrder.find_or_initialize_by(external_id: row["id"])
+    merchant_order.assign_attributes(merchant_order_attributes(row, merchant))
+    merchant_order.save!
   rescue StandardError => e
     report_failure(line, row, e)
     raise
   end
 
-  def merchant_attributes(row)
+  def merchant_order_attributes(row, merchant)
     {
-      reference: row["reference"],
-      email: row["email"],
-      live_on: row["live_on"],
-      disbursement_frequency: row["disbursement_frequency"],
-      minimum_monthly_fee_cents: Money.from_euros(row["minimum_monthly_fee"]).cents
+      merchant:,
+      amount_cents: Money.from_euros(row["amount"]).cents,
+      created_at: row["created_at"]
     }
   end
 
   def report_failure(line, row, error)
-    warn "Merchant import failed at CSV line #{line}: #{safe_row(row)}; " \
+    warn "Merchant order import failed at CSV line #{line}: #{safe_row(row)}; " \
          "#{error.class}: #{error.message}"
   end
 

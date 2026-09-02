@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: console help setup db-migrate db-rollback lint load-merchants run shell test
+.PHONY: console help setup db-migrate db-rollback lint load-merchant-orders load-merchants run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -16,6 +16,8 @@ help:
 		'  make lint         Check Ruby and RSpec style' \
 		'  make load-merchants FILE=path/to/merchants.csv' \
 		'                    Import merchants from a CSV file' \
+		'  make load-merchant-orders FILE=path/to/orders.csv' \
+		'                    Import merchant orders from a CSV file' \
 		'  make shell        Open a shell in the application container' \
 		'  make console      Open a Ruby console with the application loaded' \
 		'  make run          Run the example application'
@@ -40,6 +42,10 @@ lint:
 load-merchants:
 	@test -n "$(FILE)" || (printf '%s\n' 'FILE is required'; exit 1)
 	$(COMPOSE) run --rm app bundle exec ruby bin/load_merchants "$(FILE)"
+
+load-merchant-orders:
+	@test -n "$(FILE)" || (printf '%s\n' 'FILE is required'; exit 1)
+	$(COMPOSE) run --rm app bundle exec ruby bin/load_merchant_orders "$(FILE)"
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb

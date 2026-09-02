@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+abort "Usage: bundle exec ruby bin/load_merchant_orders PATH" unless ARGV.one?
+
+require_relative "../config/environment"
+
+LoadMerchantOrders.call(ARGV.first)
