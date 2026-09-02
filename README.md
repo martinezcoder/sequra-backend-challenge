@@ -45,9 +45,9 @@ Boundaries should not unnecessarily prevent future concurrent execution or distr
 
 ## Monetary values
 
-Monetary values will be represented by a small project-owned `Money` value object when monetary behavior is first required. Ruby has no `Money` class in its standard library, and an external money dependency is not justified at this stage.
+Monetary values are represented by a small project-owned `Money` value object. Ruby has no `Money` class in its standard library, and an external money dependency is not justified at this stage.
 
-Amounts are persisted as integers in the smallest currency unit, such as cents for EUR, rather than as floating-point or decimal values. This representation will integrate directly with the future project-owned `Money` value object. Arithmetic and comparison rules will remain encapsulated in `Money` rather than being scattered through the domain. Currency conversion, exchange rates, formatting systems, and complex multi-currency support will be added only if required.
+`Money` represents values internally as integer cents, and persisted monetary values use the same representation rather than floating-point or decimal values. It converts euro strings into cents and can expose the same value as an exact euro decimal. Additional behavior, including commission calculations, will be introduced only when required.
 
 This keeps money explicit in the domain while introducing only the behavior needed at each step.
 
