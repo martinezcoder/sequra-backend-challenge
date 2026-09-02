@@ -12,3 +12,4 @@ ActiveRecord::Base.configurations = database_config
 ActiveRecord::Base.establish_connection(environment.to_sym)
 
 require_relative "../app/models/merchant"
+require_relative "../lib/money"

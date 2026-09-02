@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup db-migrate db-rollback lint load-merchants run test
+.PHONY: console help setup db-migrate db-rollback lint load-merchants run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -16,7 +16,12 @@ help:
 		'  make lint         Check Ruby and RSpec style' \
 		'  make load-merchants FILE=path/to/merchants.csv' \
 		'                    Import merchants from a CSV file' \
+		'  make shell        Open a shell in the application container' \
+		'  make console      Open a Ruby console with the application loaded' \
 		'  make run          Run the example application'
+
+console:
+	$(COMPOSE) run --rm app bundle exec irb -r ./config/environment
 
 setup:
 	$(COMPOSE) build
@@ -38,6 +43,9 @@ load-merchants:
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb
+
+shell:
+	$(COMPOSE) run --rm app sh
 
 test:
 	$(COMPOSE) run --rm -e APP_ENV=test app sh -c 'bundle exec rake db:create db:migrate && bundle exec rspec'

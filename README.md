@@ -25,10 +25,12 @@ make db-rollback
 make test
 make lint
 make load-merchants FILE=input_data/merchants.csv
+make shell
+make console
 make run
 ```
 
-`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, `make load-merchants FILE=path/to/merchants.csv` imports merchant data, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, and `make load-merchants FILE=path/to/merchants.csv` imports merchant data. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
 
 ### Ruby version
 

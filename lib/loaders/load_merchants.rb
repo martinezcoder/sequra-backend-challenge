@@ -2,7 +2,6 @@
 
 require "csv"
 require_relative "../../config/environment"
-require_relative "../money"
 
 # Synchronizes merchant reference data atomically from its external CSV source.
 class LoadMerchants
