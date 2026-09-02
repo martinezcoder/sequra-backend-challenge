@@ -13,16 +13,14 @@
 - Prefer the simplest solution that correctly satisfies the current challenge requirements while remaining easy to understand, maintain, and evolve.
 - Avoid overengineering and premature optimization.
 - Introduce abstractions, patterns, layers, dependencies, services, or infrastructure only when they provide a clear benefit.
+- Implement only behavior required by the current task; do not anticipate future domain requirements or add speculative functionality.
 - Treat the solution as production-quality challenge code, prioritizing clarity, correctness, maintainability, testing, and problem-solving over unnecessary sophistication.
 - Design, develop, test, and document changes with the discipline expected from a real-world feature.
-- After completing an implementation or configuration change, review `README.md` to determine whether its documented information is affected.
-- Update `README.md` only when necessary to keep it accurate and consistent with the current project; do not update it mechanically for every change.
-- Keep `README.md` concise and reviewer-focused, and omit implementation details that are not useful to reviewers.
-- Do not document planned behavior as if it were already implemented.
-- If a documented intention or architectural decision changes, update `README.md` to reflect the new decision and, when relevant, briefly explain the change.
+- After implementation or configuration changes, run the relevant test suite and lint checks; report any check that cannot be run or does not pass.
+- Review `README.md` after changes and update it only when reviewer-relevant behavior or a documented technical decision has changed; briefly explain decision changes when relevant.
+- Keep `README.md` concise, accurate, and reviewer-focused; omit internal details and never document planned behavior as already implemented.
 - Keep code easy to understand and explain in a technical interview.
 - Respect the repository's existing structure and style unless there is a clear reason to change them.
-- Do not make unrelated changes.
 
 ## Requirements and ambiguity
 
@@ -60,7 +58,10 @@
 
 ## Prompt workflow
 
+- `AGENTS.md` is the source of truth for persistent project-wide instructions.
 - The `prompts/` directory contains numbered instructions for developing this challenge.
+- Numbered prompts should contain only task-specific context, decisions, requirements, constraints, and verification.
+- Do not repeat rules from `AGENTS.md` in new prompts unless a task needs to override or emphasize one for a concrete reason.
 - Prompt filenames follow the pattern `prompt_XXXX_description.md`.
 - When instructed to `Proceed with prompt_XXXX`, locate the file whose name begins with that number and read it completely before acting.
 - Follow the prompt while respecting all rules in this file.
