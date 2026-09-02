@@ -26,29 +26,17 @@ RSpec.describe Money do
     end
   end
 
-  describe "#to_euros" do
-    it "converts zero cents to euros" do
-      expect(described_class.from_euros("0.0").to_euros).to eq(BigDecimal("0.0"))
+  describe "#to_s" do
+    it "renders zero cents with two decimal places" do
+      expect(described_class.from_euros("0.0").to_s).to eq("0.00")
     end
 
-    it "converts whole euro amounts exactly" do
-      expect(described_class.from_euros("15.0").to_euros).to eq(BigDecimal("15.0"))
+    it "renders whole euro amounts with two decimal places" do
+      expect(described_class.from_euros("15.0").to_s).to eq("15.00")
     end
 
-    it "converts amounts containing cents exactly" do
-      money = described_class.from_euros("102.29")
-
-      expect(money.to_euros).to eq(BigDecimal("102.29"))
-    end
-
-    it "preserves the value through a euros-to-cents-to-euros round trip" do
-      money = described_class.from_euros("102.29")
-
-      expect([money.cents, money.to_euros]).to eq([10_229, BigDecimal("102.29")])
-    end
-
-    it "returns an exact decimal rather than a floating-point value" do
-      expect(described_class.from_euros("0.29").to_euros).to be_a(BigDecimal)
+    it "renders values containing cents" do
+      expect(described_class.from_euros("102.29").to_s).to eq("102.29")
     end
   end
 end

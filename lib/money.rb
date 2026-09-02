@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
-require "bigdecimal"
-
-# Stores integer cents and converts to and from exact euro decimals without
-# providing broader monetary operations.
+# Stores and calculates monetary values only as integer cents. Its string
+# representation is intended solely for presentation.
 class Money
   EURO_FORMAT = /\A\d+\.\d{1,2}\z/
 
@@ -13,15 +11,17 @@ class Money
     valid = value.is_a?(String) && EURO_FORMAT.match?(value)
     raise ArgumentError, "invalid euro amount" unless valid
 
-    new((BigDecimal(value) * 100).to_i)
+    euros, cents = value.split(".")
+    new((euros.to_i * 100) + cents.ljust(2, "0").to_i)
   end
 
   def initialize(cents)
     @cents = cents
   end
 
-  def to_euros
-    BigDecimal(cents.to_s) / 100
+  def to_s
+    euros, remaining_cents = cents.divmod(100)
+    format("%<euros>d.%<cents>02d", euros:, cents: remaining_cents)
   end
 
   private_class_method :new
