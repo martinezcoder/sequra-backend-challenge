@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gem "activerecord"
+gem "csv"
 gem "factory_bot"
 gem "pg"
 gem "rake"

@@ -24,10 +24,11 @@ make db-migrate
 make db-rollback
 make test
 make lint
+make load-merchants FILE=input_data/merchants.csv
 make run
 ```
 
-`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, `make load-merchants FILE=path/to/merchants.csv` imports merchant data, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
@@ -40,6 +41,8 @@ The current direction favors low coupling and high cohesion. Dependency injectio
 After evaluating the challenge requirements, persistence is needed from the first domain iteration. PostgreSQL was selected instead of a lighter option such as SQLite because Docker removes most of SQLite's setup-cost advantage for reviewers. ActiveRecord is used directly without Rails, providing conventional migrations, associations, transactions, constraints, and querying without custom repository infrastructure. Schema changes are managed through ActiveRecord migrations.
 
 Merchants are persisted before their orders so orders can later reference a merchant instead of duplicating merchant information. A merchant uses the conventional ActiveRecord/PostgreSQL internal identifier; there is currently no requirement that justifies an internal UUID. The source merchant `id` is retained separately as the unique `external_id`, while its unique `reference` is retained because that is how the orders dataset identifies merchants. Disbursement frequency is stored as supplied by the source data; its behavior will be implemented separately.
+
+Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 
 Boundaries should not unnecessarily prevent future concurrent execution or distribution across processes. Operations that could later run as background jobs should be idempotent when appropriate, so retries do not create duplicate effects or irreversible inconsistencies. Concurrency, distributed execution, and background processing are not currently implemented.
 

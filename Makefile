@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help setup db-migrate db-rollback lint run test
+.PHONY: help setup db-migrate db-rollback lint load-merchants run test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -14,6 +14,8 @@ help:
 		'  make db-rollback  Roll back the latest database migration' \
 		'  make test         Run the complete test suite' \
 		'  make lint         Check Ruby and RSpec style' \
+		'  make load-merchants FILE=path/to/merchants.csv' \
+		'                    Import merchants from a CSV file' \
 		'  make run          Run the example application'
 
 setup:
@@ -29,6 +31,10 @@ db-rollback:
 
 lint:
 	$(COMPOSE) run --rm app bundle exec rubocop
+
+load-merchants:
+	@test -n "$(FILE)" || (printf '%s\n' 'FILE is required'; exit 1)
+	$(COMPOSE) run --rm app bundle exec ruby bin/load_merchants "$(FILE)"
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb
