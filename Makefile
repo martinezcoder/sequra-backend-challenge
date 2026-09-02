@@ -45,7 +45,7 @@ run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb
 
 shell:
-	$(COMPOSE) run --rm app sh
+	$(COMPOSE) run --rm app bash
 
 test:
 	$(COMPOSE) run --rm -e APP_ENV=test app sh -c 'bundle exec rake db:create db:migrate && bundle exec rspec'
