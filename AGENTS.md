@@ -35,6 +35,7 @@
 - Keep the project straightforward for reviewers to run locally.
 - Prefer a minimal Docker and Docker Compose setup so reviewers do not need Ruby or project dependencies installed locally.
 - Provide a small Makefile for common operations such as setup, testing, and running the application.
+- Include every new user-facing Makefile target in the Makefile help output.
 - Do not introduce unnecessary infrastructure.
 
 ## Change management

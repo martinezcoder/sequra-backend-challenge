@@ -14,6 +14,8 @@ The implementation follows a baby-steps approach: start with the simplest useful
 
 A minimal Docker-based environment isolates the Ruby runtime and project dependencies, so reviewers only need Docker with Docker Compose rather than a local Ruby installation.
 
+Run `make` to list the available commands.
+
 The following commands provide the complete current reviewer workflow:
 
 ```sh
