@@ -42,7 +42,7 @@ class LoadMerchantOrders
       external_id: row["id"],
       merchant_id: merchant_id(row, merchant_ids),
       amount_cents: Money.from_euros(row["amount"]).cents,
-      created_at: row["created_at"]
+      ordered_on: Date.parse(row["created_at"])
     }
   rescue StandardError => e
     report_failure(line, row, e)

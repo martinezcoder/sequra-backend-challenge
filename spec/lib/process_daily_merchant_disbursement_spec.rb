@@ -10,8 +10,8 @@ RSpec.describe ProcessDailyMerchantDisbursement do
     context "when the merchant has orders on the processing date" do
       let!(:orders) do
         [
-          create(:merchant_order, merchant:, amount_cents: 10_229, created_at: Time.utc(2023, 2, 1, 9)),
-          create(:merchant_order, merchant:, amount_cents: 43_321, created_at: Time.utc(2023, 2, 1, 18))
+          create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: Date.new(2023, 2, 1)),
+          create(:merchant_order, merchant:, amount_cents: 43_321, ordered_on: Date.new(2023, 2, 1))
         ]
       end
 
@@ -37,7 +37,7 @@ RSpec.describe ProcessDailyMerchantDisbursement do
 
     context "when an order belongs to another date" do
       let!(:order) do
-        create(:merchant_order, merchant:, created_at: Time.utc(2023, 2, 2))
+        create(:merchant_order, merchant:, ordered_on: Date.new(2023, 2, 2))
       end
 
       before do
@@ -52,11 +52,11 @@ RSpec.describe ProcessDailyMerchantDisbursement do
     context "when an order belongs to another merchant" do
       let(:other_merchant) { create(:merchant, disbursement_frequency: "DAILY") }
       let!(:other_order) do
-        create(:merchant_order, merchant: other_merchant, created_at: Time.utc(2023, 2, 1))
+        create(:merchant_order, merchant: other_merchant, ordered_on: Date.new(2023, 2, 1))
       end
 
       before do
-        create(:merchant_order, merchant:, created_at: Time.utc(2023, 2, 1))
+        create(:merchant_order, merchant:, ordered_on: Date.new(2023, 2, 1))
         described_class.call(merchant, processing_date)
       end
 
@@ -75,7 +75,7 @@ RSpec.describe ProcessDailyMerchantDisbursement do
 
     context "when the date is processed more than once" do
       let!(:order) do
-        create(:merchant_order, merchant:, amount_cents: 10_229, created_at: Time.utc(2023, 2, 1))
+        create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: Date.new(2023, 2, 1))
       end
 
       before do
@@ -96,19 +96,19 @@ RSpec.describe ProcessDailyMerchantDisbursement do
     subject(:processor) { described_class.new(merchant, processing_date) }
 
     let(:eligible_orders) do
-      MerchantOrder.where(merchant:, created_at: processing_date...processing_date.next_day)
+      MerchantOrder.where(merchant:, ordered_on: processing_date)
     end
     let!(:orders) do
       [
-        create(:merchant_order, merchant:, created_at: Time.utc(2023, 2, 1, 9)),
-        create(:merchant_order, merchant:, created_at: Time.utc(2023, 2, 1, 18))
+        create(:merchant_order, merchant:, ordered_on: Date.new(2023, 2, 1)),
+        create(:merchant_order, merchant:, ordered_on: Date.new(2023, 2, 1))
       ]
     end
 
     before do
       allow(eligible_orders).to receive(:find_each).and_yield(orders.first).and_yield(orders.last)
       allow(MerchantOrder).to receive(:where)
-        .with(merchant:, created_at: processing_date...processing_date.next_day)
+        .with(merchant:, ordered_on: processing_date)
         .and_return(eligible_orders)
       allow(orders.last).to receive(:update!).and_raise("processing failed")
     end

@@ -24,7 +24,7 @@ class ProcessDailyMerchantDisbursement
   private
 
   def eligible_orders
-    MerchantOrder.where(merchant: @merchant, created_at: @date...@date.next_day)
+    MerchantOrder.where(merchant: @merchant, ordered_on: @date)
   end
 
   def find_or_create_disbursement

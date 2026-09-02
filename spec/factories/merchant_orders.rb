@@ -5,6 +5,6 @@ FactoryBot.define do
     sequence(:external_id) { |number| format("order_%012d", number) }
     merchant
     amount_cents { 10_229 }
-    created_at { Time.utc(2023, 2, 1) }
+    ordered_on { Date.new(2023, 2, 1) }
   end
 end

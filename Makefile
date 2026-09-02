@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: console help setup db-migrate db-rollback lint load-merchant-orders load-merchants run shell test
+.PHONY: console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -10,6 +10,7 @@ help:
 	@printf '%s\n' \
 		'Available commands:' \
 		'  make setup        Build the environment and prepare the database' \
+		'  make db-drop      Drop the development and test databases' \
 		'  make db-migrate   Run pending database migrations' \
 		'  make db-rollback  Roll back the latest database migration' \
 		'  make test         Run the complete test suite' \
@@ -29,6 +30,9 @@ setup:
 	$(COMPOSE) build
 	$(COMPOSE) up --detach --wait db
 	$(COMPOSE) run --rm --no-deps app bundle exec rake db:create db:migrate
+
+db-drop:
+	$(COMPOSE) run --rm app bundle exec rake db:drop
 
 db-migrate:
 	$(COMPOSE) run --rm app bundle exec rake db:migrate

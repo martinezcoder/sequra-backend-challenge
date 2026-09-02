@@ -17,7 +17,7 @@ RSpec.describe LoadMerchantOrders do
 
     context "when the order does not exist" do
       let(:expected_attributes) do
-        { merchant:, amount_cents: 10_229, created_at: Time.utc(2023, 2, 1) }
+        { merchant:, amount_cents: 10_229, ordered_on: Date.new(2023, 2, 1) }
       end
 
       before do
@@ -60,7 +60,7 @@ RSpec.describe LoadMerchantOrders do
       let(:expected_attributes) do
         {
           amount_cents: 10_229,
-          created_at: Time.utc(2023, 2, 1),
+          ordered_on: Date.new(2023, 2, 1),
           disbursement: merchant.disbursements.first,
           fee_cents: 102
         }
@@ -75,7 +75,7 @@ RSpec.describe LoadMerchantOrders do
           disbursement:,
           fee_cents: 102,
           amount_cents: 500,
-          created_at: Time.utc(2023, 1, 1)
+          ordered_on: Date.new(2023, 1, 1)
         )
         write_csv(valid_row)
       end

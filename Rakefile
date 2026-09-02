@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+ENV["RAILS_ENV"] = ENV.fetch("APP_ENV", "development")
+
 require_relative "config/environment"
 require "active_record/tasks/database_tasks"
 

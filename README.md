@@ -20,6 +20,7 @@ The following commands provide the complete current reviewer workflow:
 
 ```sh
 make setup
+make db-drop
 make db-migrate
 make db-rollback
 make test
@@ -31,7 +32,7 @@ make console
 make run
 ```
 
-`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
@@ -49,7 +50,7 @@ Disbursements belong to merchants and have a unique reference and an explicit bu
 
 Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 
-Merchant orders resolve their merchant by the source reference and persist only the resulting association. Because the provided dataset contains approximately 1.3 million orders, the importer builds a small in-memory `reference` to merchant ID map and persists streamed batches through bulk upserts. This avoids per-order merchant lookups and millions of individual writes, while the unique `external_id` constraint keeps re-imports idempotent. The import remains one transaction, converts amounts to integer cents through `Money`, and preserves the source creation timestamp.
+Merchant orders resolve their merchant by the source reference and persist only the resulting association. The source CSV's `created_at` value is a calendar date, so it is represented internally as the non-null date `ordered_on` rather than as a timestamp with unsupported precision. Because the provided dataset contains approximately 1.3 million orders, the importer builds a small in-memory `reference` to merchant ID map and persists streamed batches through bulk upserts. This avoids per-order merchant lookups and millions of individual writes, while the unique `external_id` constraint keeps re-imports idempotent. The import remains one transaction and converts amounts to integer cents through `Money`.
 
 The bulk import was profiled during implementation. Different batch sizes, transaction boundaries, and both `insert_all` and `upsert_all` were tested. Parsing and transforming the approximately 1.3 million CSV rows took under one minute, while persisting the complete dataset took around eight minutes across the tested approaches. This indicates that PostgreSQL persistence is the dominant cost rather than CSV processing or batch configuration. Since this dataset represents an initial bulk import and future orders are expected to arrive incrementally, further optimization was deliberately avoided in favor of keeping the importer simple and idempotent.
 
