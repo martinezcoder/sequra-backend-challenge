@@ -27,6 +27,8 @@ GEM
     connection_pool (3.0.2)
     diff-lcs (1.6.2)
     drb (2.2.3)
+    factory_bot (6.6.0)
+      activesupport (>= 6.1.0)
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
     json (2.21.2)
@@ -94,6 +96,7 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord
+  factory_bot
   pg
   rake
   rspec (~> 3.13)

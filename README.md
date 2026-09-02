@@ -37,7 +37,9 @@ Ruby 3.4.10 is pinned exactly for a reproducible, modern environment. Ruby 4 was
 
 The current direction favors low coupling and high cohesion. Dependency injection will be used where it keeps components independent, testable, and replaceable, but neither injection nor abstractions will be introduced solely for architectural purity.
 
-After evaluating the challenge requirements, persistence is needed from the first domain iteration. PostgreSQL was selected instead of a lighter option such as SQLite because Docker removes most of SQLite's setup-cost advantage for reviewers. ActiveRecord is used directly without Rails, providing conventional migrations, associations, transactions, constraints, and querying without custom repository infrastructure. Schema changes are managed through ActiveRecord migrations. No domain models or disbursement logic have been implemented yet.
+After evaluating the challenge requirements, persistence is needed from the first domain iteration. PostgreSQL was selected instead of a lighter option such as SQLite because Docker removes most of SQLite's setup-cost advantage for reviewers. ActiveRecord is used directly without Rails, providing conventional migrations, associations, transactions, constraints, and querying without custom repository infrastructure. Schema changes are managed through ActiveRecord migrations.
+
+Merchants are persisted before their orders so orders can later reference a merchant instead of duplicating merchant information. A merchant uses the conventional ActiveRecord/PostgreSQL internal identifier; there is currently no requirement that justifies an internal UUID. The source merchant `id` is retained separately as the unique `external_id`, while its unique `reference` is retained because that is how the orders dataset identifies merchants. Disbursement frequency is stored as supplied by the source data; its behavior will be implemented separately.
 
 Boundaries should not unnecessarily prevent future concurrent execution or distribution across processes. Operations that could later run as background jobs should be idempotent when appropriate, so retries do not create duplicate effects or irreversible inconsistencies. Concurrency, distributed execution, and background processing are not currently implemented.
 
@@ -45,7 +47,7 @@ Boundaries should not unnecessarily prevent future concurrent execution or distr
 
 Monetary values will be represented by a small project-owned `Money` value object when monetary behavior is first required. Ruby has no `Money` class in its standard library, and an external money dependency is not justified at this stage.
 
-Amounts will be stored internally as integers in the smallest currency unit, such as cents for EUR; `Float` will not be used for monetary calculations. Arithmetic and comparison rules will remain encapsulated in `Money` rather than being scattered through the domain. Currency conversion, exchange rates, formatting systems, and complex multi-currency support will be added only if required.
+Amounts are persisted as integers in the smallest currency unit, such as cents for EUR, rather than as floating-point or decimal values. This representation will integrate directly with the future project-owned `Money` value object. Arithmetic and comparison rules will remain encapsulated in `Money` rather than being scattered through the domain. Currency conversion, exchange rates, formatting systems, and complex multi-currency support will be added only if required.
 
 This keeps money explicit in the domain while introducing only the behavior needed at each step.
 

@@ -10,3 +10,5 @@ database_config = YAML.safe_load(ERB.new(File.read(database_config_path)).result
 
 ActiveRecord::Base.configurations = database_config
 ActiveRecord::Base.establish_connection(environment.to_sym)
+
+require_relative "../app/models/merchant"
