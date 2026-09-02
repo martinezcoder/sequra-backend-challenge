@@ -2,44 +2,68 @@
 
 # Synchronizes merchant orders atomically from their external CSV source.
 class LoadMerchantOrders
+  # Limits importer memory without claiming an empirically tuned batch size.
+  BATCH_SIZE = 1_000
+
   def self.call(path)
     new(path).call
   end
 
   def initialize(path)
     @path = path
+
+    # Keep a lightweight reference-to-id snapshot in memory to avoid querying
+    # merchants for each of the ~1.3M imported orders.
+    @merchant_ids = Merchant.pluck(:reference, :id).to_h.freeze
   end
 
   # Imports the entire CSV in a single transaction.
   # Any row failure aborts the import and rolls back all changes.
   def call
     ActiveRecord::Base.transaction(requires_new: true) do
+      batch = []
+
       # Start at 2 because line 1 contains the CSV headers.
-      # This is important to know that first line is line 2
       CSV.foreach(@path, headers: true, col_sep: ";").with_index(2) do |row, line|
-        import(row, line)
+        batch << attributes(row, line)
+        persist(batch) if batch.size >= BATCH_SIZE
       end
+
+      persist(batch)
     end
   end
 
   private
 
-  def import(row, line)
-    merchant = Merchant.find_by!(reference: row["merchant_reference"])
-    merchant_order = MerchantOrder.find_or_initialize_by(external_id: row["id"])
-    merchant_order.assign_attributes(merchant_order_attributes(row, merchant))
-    merchant_order.save!
+  attr_reader :merchant_ids
+
+  def attributes(row, line)
+    {
+      external_id: row["id"],
+      merchant_id: merchant_id(row, merchant_ids),
+      amount_cents: Money.from_euros(row["amount"]).cents,
+      created_at: row["created_at"]
+    }
   rescue StandardError => e
     report_failure(line, row, e)
     raise
   end
 
-  def merchant_order_attributes(row, merchant)
-    {
-      merchant:,
-      amount_cents: Money.from_euros(row["amount"]).cents,
-      created_at: row["created_at"]
-    }
+  def merchant_id(row, merchant_ids)
+    reference = row["merchant_reference"]
+    merchant_ids.fetch(reference) do
+      raise ActiveRecord::RecordNotFound, "Couldn't find Merchant with reference #{reference.inspect}"
+    end
+  end
+
+  def persist(batch)
+    return if batch.empty?
+
+    # Bulk upsert avoids millions of model-level database writes. It intentionally
+    # bypasses validations and callbacks, so every value must be resolved and
+    # normalized before it reaches this persistence boundary.
+    MerchantOrder.upsert_all(batch, unique_by: :external_id)
+    batch.clear
   end
 
   def report_failure(line, row, error)

@@ -73,6 +73,7 @@ RSpec.describe LoadMerchantOrders do
       let(:unresolved_row) { ["20b674c93ea6", "missing_merchant", "433.21", "2023-02-02"] }
 
       before do
+        stub_const("LoadMerchantOrders::BATCH_SIZE", 1)
         write_csv(valid_row, unresolved_row)
       end
 
@@ -94,6 +95,7 @@ RSpec.describe LoadMerchantOrders do
       let(:unresolved_row) { ["20b674c93ea6", "missing_merchant", "433.21", "2023-02-02"] }
 
       before do
+        stub_const("LoadMerchantOrders::BATCH_SIZE", 1)
         create(:merchant_order, external_id:, merchant:, amount_cents: 500)
         write_csv(valid_row, unresolved_row)
       end
@@ -103,6 +105,27 @@ RSpec.describe LoadMerchantOrders do
           .to raise_error(ActiveRecord::RecordNotFound)
 
         expect(MerchantOrder.find_by!(external_id:).amount_cents).to eq(500)
+      end
+    end
+
+    context "when the final batch is smaller than the batch size" do
+      let(:additional_rows) do
+        [
+          ["20b674c93ea6", merchant.reference, "433.21", "2023-02-02"],
+          ["0b73fb1d3332", merchant.reference, "194.37", "2023-02-03"]
+        ]
+      end
+
+      before do
+        stub_const("LoadMerchantOrders::BATCH_SIZE", 2)
+        write_csv(valid_row, *additional_rows)
+      end
+
+      it "persists the final partial batch" do
+        described_class.call(csv_file.path)
+
+        external_ids = [external_id, *additional_rows.map(&:first)]
+        expect(MerchantOrder.where(external_id: external_ids).count).to eq(3)
       end
     end
   end
