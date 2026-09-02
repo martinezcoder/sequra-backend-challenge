@@ -20,12 +20,14 @@ The following commands provide the complete current reviewer workflow:
 
 ```sh
 make setup
+make db-migrate
+make db-rollback
 make test
 make lint
 make run
 ```
 
-`make setup` builds the development image, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the database. `make db-migrate` applies pending migrations, `make db-rollback` reverts the latest migration, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
@@ -35,7 +37,7 @@ Ruby 3.4.10 is pinned exactly for a reproducible, modern environment. Ruby 4 was
 
 The current direction favors low coupling and high cohesion. Dependency injection will be used where it keeps components independent, testable, and replaceable, but neither injection nor abstractions will be introduced solely for architectural purity.
 
-Persistence is intentionally excluded from the first implementation steps. A database will be added when the evolving solution requires it; no database or persistence library has been selected yet. Likewise, background-job infrastructure will not be introduced without a demonstrated need.
+After evaluating the challenge requirements, persistence is needed from the first domain iteration. PostgreSQL was selected instead of a lighter option such as SQLite because Docker removes most of SQLite's setup-cost advantage for reviewers. ActiveRecord is used directly without Rails, providing conventional migrations, associations, transactions, constraints, and querying without custom repository infrastructure. Schema changes are managed through ActiveRecord migrations. No domain models or disbursement logic have been implemented yet.
 
 Boundaries should not unnecessarily prevent future concurrent execution or distribution across processes. Operations that could later run as background jobs should be idempotent when appropriate, so retries do not create duplicate effects or irreversible inconsistencies. Concurrency, distributed execution, and background processing are not currently implemented.
 
@@ -49,4 +51,4 @@ This keeps money explicit in the domain while introducing only the behavior need
 
 ## Decisions and evolution
 
-This README records the developer's current decisions and will evolve with the solution. Relevant technical decisions will be documented when they arise, while keeping this document concise and focused on reviewer needs. No framework, database, persistence library, background processor, or concurrency strategy has been selected yet.
+This README records the developer's current decisions and will evolve with the solution. Relevant technical decisions will be documented when they arise, while keeping this document concise and focused on reviewer needs. No web framework, background processor, or concurrency strategy has been selected yet.
