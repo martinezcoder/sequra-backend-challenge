@@ -56,6 +56,37 @@ RSpec.describe LoadMerchantOrders do
       end
     end
 
+    context "when the order has already been disbursed" do
+      let(:expected_attributes) do
+        {
+          amount_cents: 10_229,
+          created_at: Time.utc(2023, 2, 1),
+          disbursement: merchant.disbursements.first,
+          fee_cents: 102
+        }
+      end
+
+      before do
+        disbursement = create(:disbursement, merchant:)
+        create(
+          :merchant_order,
+          external_id:,
+          merchant:,
+          disbursement:,
+          fee_cents: 102,
+          amount_cents: 500,
+          created_at: Time.utc(2023, 1, 1)
+        )
+        write_csv(valid_row)
+      end
+
+      it "updates source attributes without changing its disbursement state" do
+        described_class.call(csv_file.path)
+
+        expect(MerchantOrder.find_by!(external_id:)).to have_attributes(expected_attributes)
+      end
+    end
+
     context "when the merchant reference cannot be resolved" do
       let(:unresolved_row) { ["20b674c93ea6", "missing_merchant", "433.21", "2023-02-02"] }
 

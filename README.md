@@ -45,7 +45,7 @@ After evaluating the challenge requirements, persistence is needed from the firs
 
 Merchants are persisted before their orders so orders can later reference a merchant instead of duplicating merchant information. A merchant uses the conventional ActiveRecord/PostgreSQL internal identifier; there is currently no requirement that justifies an internal UUID. The source merchant `id` is retained separately as the unique `external_id`, while its unique `reference` is retained because that is how the orders dataset identifies merchants. Disbursement frequency is stored as supplied by the source data; its behavior will be implemented separately.
 
-Disbursements belong to merchants and have a unique reference and an explicit business date. A database constraint permits at most one disbursement per merchant and date; processing behavior is not implemented yet.
+Disbursements belong to merchants and have a unique reference and an explicit business date. A database constraint permits at most one disbursement per merchant and date. Processed merchant orders can reference their disbursement and persist their per-order commission as integer `fee_cents`; both fields remain empty until processing, which is not implemented yet.
 
 Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 
