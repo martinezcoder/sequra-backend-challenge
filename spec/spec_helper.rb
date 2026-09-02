@@ -2,7 +2,6 @@
 
 require "factory_bot"
 require_relative "../config/environment"
-require_relative "../lib/greeting"
 
 FactoryBot.definition_file_paths = [File.join(__dir__, "factories")]
 FactoryBot.find_definitions

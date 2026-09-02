@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require "csv"
-require_relative "../../config/environment"
-
 # Synchronizes merchant reference data atomically from its external CSV source.
 class LoadMerchants
   def self.call(path)

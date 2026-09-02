@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "active_record"
+require "csv"
 require "erb"
 require "yaml"
 
@@ -12,4 +13,6 @@ ActiveRecord::Base.configurations = database_config
 ActiveRecord::Base.establish_connection(environment.to_sym)
 
 require_relative "../app/models/merchant"
+require_relative "../lib/greeting"
 require_relative "../lib/money"
+require_relative "../lib/loaders/load_merchants"

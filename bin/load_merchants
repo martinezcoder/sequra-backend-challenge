@@ -3,6 +3,6 @@
 
 abort "Usage: bundle exec ruby bin/load_merchants PATH" unless ARGV.one?
 
-require_relative "../lib/loaders/load_merchants"
+require_relative "../config/environment"
 
 LoadMerchants.call(ARGV.first)

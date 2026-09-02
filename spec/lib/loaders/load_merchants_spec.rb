@@ -1,91 +1,113 @@
 # frozen_string_literal: true
 
-require "csv"
 require "tempfile"
 require "spec_helper"
-require_relative "../../../lib/loaders/load_merchants"
 
 RSpec.describe LoadMerchants do
   let(:csv_file) { Tempfile.new(["merchants", ".csv"]) }
-  let(:external_id) { "86312006-4d7e-45c4-9c28-788f4aa68a62" }
-  let(:valid_row) do
-    [external_id, "padberg_group", "info@padberg-group.com", "2023-02-01", "DAILY", "15.0"]
-  end
-  let(:expected_attributes) do
-    {
-      reference: "padberg_group",
-      email: "info@padberg-group.com",
-      live_on: Date.new(2023, 2, 1),
-      disbursement_frequency: "DAILY",
-      minimum_monthly_fee_cents: 1_500
-    }
-  end
 
   after do
     csv_file.close!
   end
 
-  it "imports a merchant and maps its source values" do
-    write_csv(valid_row)
+  describe ".call" do
+    let(:external_id) { "86312006-4d7e-45c4-9c28-788f4aa68a62" }
+    let(:valid_row) do
+      [external_id, "padberg_group", "info@padberg-group.com", "2023-02-01", "DAILY", "15.0"]
+    end
+    let(:invalid_row) do
+      ["d1649242-a612-46ba-82d8-225542bb9576", "invalid", "invalid@example.com",
+       "2023-02-02", "WEEKLY", "invalid_fee"]
+    end
 
-    described_class.call(csv_file.path)
+    context "when the merchant does not exist" do
+      let(:expected_attributes) do
+        {
+          reference: "padberg_group",
+          email: "info@padberg-group.com",
+          live_on: Date.new(2023, 2, 1),
+          disbursement_frequency: "DAILY",
+          minimum_monthly_fee_cents: 1_500
+        }
+      end
 
-    expect(Merchant.find_by!(external_id:)).to have_attributes(expected_attributes)
-  end
+      before do
+        write_csv(valid_row)
+      end
 
-  it "is idempotent" do
-    write_csv(valid_row)
+      it "imports the merchant and maps its source values" do
+        described_class.call(csv_file.path)
 
-    2.times { described_class.call(csv_file.path) }
+        expect(Merchant.find_by!(external_id:)).to have_attributes(expected_attributes)
+      end
+    end
 
-    expect(Merchant.where(external_id:).count).to eq(1)
-  end
+    context "when the merchant already exists" do
+      before do
+        create(:merchant, external_id:, email: "old@example.com")
+        write_csv(valid_row)
+      end
 
-  it "updates a merchant when its source data changes" do
-    create(:merchant, external_id:, email: "old@example.com")
-    write_csv(valid_row)
+      it "updates the merchant with its source data" do
+        described_class.call(csv_file.path)
 
-    described_class.call(csv_file.path)
+        expect(Merchant.find_by!(external_id:).email).to eq("info@padberg-group.com")
+      end
+    end
 
-    expect(Merchant.find_by!(external_id:).email).to eq("info@padberg-group.com")
-  end
+    context "when the same file is imported more than once" do
+      before do
+        write_csv(valid_row)
+      end
 
-  it "rolls back earlier creates when a later row fails" do
-    write_csv(valid_row, invalid_row)
+      it "does not create duplicate merchants" do
+        2.times { described_class.call(csv_file.path) }
 
-    expect { import_ignoring_error }.not_to(change { Merchant.where(external_id:).count })
-  end
+        expect(Merchant.where(external_id:).count).to eq(1)
+      end
+    end
 
-  it "rolls back earlier updates when a later row fails" do
-    merchant = create(:merchant, external_id:, email: "old@example.com")
-    write_csv(valid_row, invalid_row)
+    context "when a later CSV row is invalid after a new merchant" do
+      before do
+        write_csv(valid_row, invalid_row)
+      end
 
-    expect { import_ignoring_error }.not_to(change { merchant.reload.email })
-  end
+      it "reports the failing CSV line and row" do
+        expect { described_class.call(csv_file.path) }
+          .to output(/CSV line 3:.*invalid_fee.*ArgumentError/).to_stderr
+          .and raise_error(ArgumentError)
+      end
 
-  it "reports the failing CSV line and row to stderr" do
-    write_csv(valid_row, invalid_row)
+      it "raises an error and rolls back the create", :aggregate_failures do
+        expect { described_class.call(csv_file.path) }.to raise_error(ArgumentError)
 
-    expect { described_class.call(csv_file.path) }
-      .to output(/CSV line 3:.*invalid_fee.*ArgumentError/).to_stderr
-      .and raise_error(ArgumentError)
-  end
+        expect(Merchant.exists?(external_id:)).to be(false)
+      end
+    end
 
-  it "does not silently skip invalid data" do
-    write_csv(invalid_row)
+    context "when a later CSV row is invalid after an existing merchant" do
+      let!(:merchant) { create(:merchant, external_id:, email: "old@example.com") }
 
-    expect { described_class.call(csv_file.path) }.to raise_error(ArgumentError)
-  end
+      before do
+        write_csv(valid_row, invalid_row)
+      end
 
-  def invalid_row
-    ["d1649242-a612-46ba-82d8-225542bb9576", "invalid", "invalid@example.com",
-     "2023-02-02", "WEEKLY", "invalid_fee"]
-  end
+      it "raises an error and rolls back the update", :aggregate_failures do
+        expect { described_class.call(csv_file.path) }.to raise_error(ArgumentError)
 
-  def import_ignoring_error
-    described_class.call(csv_file.path)
-  rescue ArgumentError
-    nil
+        expect(merchant.reload.email).to eq("old@example.com")
+      end
+    end
+
+    context "when the CSV data is invalid" do
+      before do
+        write_csv(invalid_row)
+      end
+
+      it "raises an error instead of silently skipping the row" do
+        expect { described_class.call(csv_file.path) }.to raise_error(ArgumentError)
+      end
+    end
   end
 
   def write_csv(*rows)

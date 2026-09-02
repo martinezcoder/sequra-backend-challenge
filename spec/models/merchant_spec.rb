@@ -28,15 +28,17 @@ RSpec.describe Merchant do
     expect(merchant.minimum_monthly_fee_cents).to be_an(Integer)
   end
 
-  it "rejects duplicate external identifiers at the database level" do
-    expect do
-      create(:merchant, external_id: merchant.external_id)
-    end.to raise_error(ActiveRecord::RecordNotUnique)
-  end
+  context "when unique source identifiers are duplicated" do
+    it "rejects a duplicate external identifier at the database level" do
+      expect do
+        create(:merchant, external_id: merchant.external_id)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
+    end
 
-  it "rejects duplicate references at the database level" do
-    expect do
-      create(:merchant, reference: merchant.reference)
-    end.to raise_error(ActiveRecord::RecordNotUnique)
+    it "rejects a duplicate reference at the database level" do
+      expect do
+        create(:merchant, reference: merchant.reference)
+      end.to raise_error(ActiveRecord::RecordNotUnique)
+    end
   end
 end

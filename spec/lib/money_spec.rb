@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require_relative "../../lib/money"
 
 RSpec.describe Money do
   describe ".from_euros" do
@@ -21,8 +20,10 @@ RSpec.describe Money do
       expect(described_class.from_euros("0.29").cents).to eq(29)
     end
 
-    it "rejects invalid monetary input" do
-      expect { described_class.from_euros("invalid") }.to raise_error(ArgumentError)
+    context "when the input is invalid" do
+      it "raises an error" do
+        expect { described_class.from_euros("invalid") }.to raise_error(ArgumentError)
+      end
     end
   end
 

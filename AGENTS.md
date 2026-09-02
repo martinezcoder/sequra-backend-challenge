@@ -27,6 +27,12 @@
 - Document important behavior close to the code when it is not obvious, including method contracts, guarantees and invariants, significant implementation decisions, and the meaning of magic values.
 - Comments should explain why something exists or clarify behavior needed to modify the code safely; do not narrate self-explanatory code.
 
+## RSpec style
+
+- Prefer `context` for meaningful states or conditions, while avoiding nesting when a flat spec is clearer.
+- Keep `it` focused on observable behavior.
+- Use `let` for scenario data and objects, `before` for shared setup with side effects, and methods for action-oriented helpers.
+
 ## Requirements and ambiguity
 
 - Do not silently make significant assumptions about ambiguous challenge requirements.
