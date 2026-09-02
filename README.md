@@ -19,10 +19,11 @@ The following commands provide the complete current reviewer workflow:
 ```sh
 make setup
 make test
+make lint
 make run
 ```
 
-`make setup` builds the development image, `make test` runs the complete RSpec suite, and `make run` executes the example Ruby program.
+`make setup` builds the development image, `make test` runs the complete RSpec suite, `make lint` checks Ruby and RSpec style with RuboCop, and `make run` executes the example Ruby program.
 
 ### Ruby version
 

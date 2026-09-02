@@ -9,4 +9,3 @@ RSpec.describe Greeting do
     end
   end
 end
-

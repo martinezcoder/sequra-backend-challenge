@@ -3,4 +3,3 @@
 require_relative "lib/greeting"
 
 puts Greeting.new.message
-
