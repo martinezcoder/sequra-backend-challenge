@@ -8,7 +8,7 @@ class ProcessWeeklyDisbursements
       # Database-side filtering can be introduced if merchant volume justifies it.
       next unless merchant.live_on&.wday == date.wday
 
-      ProcessWeeklyMerchantDisbursement.call(merchant, date)
+      ProcessMerchantDisbursement.call(merchant, date)
     end
   end
 end

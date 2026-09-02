@@ -4,7 +4,7 @@
 class ProcessDailyDisbursements
   def self.call(date)
     Merchant.where(disbursement_frequency: "DAILY").find_each do |merchant|
-      ProcessDailyMerchantDisbursement.call(merchant, date)
+      ProcessMerchantDisbursement.call(merchant, date)
     end
   end
 end

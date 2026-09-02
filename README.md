@@ -51,7 +51,7 @@ Disbursements belong to merchants and have a unique reference and an explicit bu
 
 WEEKLY processing runs a merchant when the processing date has the same weekday as its `live_on` date. The challenge defines that weekday but not the exact order window; this implementation uses the seven calendar dates ending on the processing date, inclusive. Each merchant/date pair remains an independent transaction and eligible orders are processed in ActiveRecord batches.
 
-`ProcessDisbursements.call(date)` is the application-level entry point for a business date and is exposed through `make process-disbursements DATE=YYYY-MM-DD`. It runs DAILY and then WEEKLY processing sequentially; each delegated merchant/date unit retains its own transaction and idempotency guarantees.
+`ProcessDisbursements.call(date)` is the application-level entry point for a business date and is exposed through `make process-disbursements DATE=YYYY-MM-DD`. It runs the separate DAILY and WEEKLY scheduling flows sequentially; both delegate selected merchants to the same merchant/date processing unit, which retains its own transaction and idempotency guarantees.
 
 Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 

@@ -2,17 +2,15 @@
 
 require "spec_helper"
 
-RSpec.describe ProcessWeeklyMerchantDisbursement do
+RSpec.describe ProcessMerchantDisbursement do
   let(:processing_date) { Date.new(2026, 9, 3) }
-  let(:merchant) do
-    create(:merchant, disbursement_frequency: "WEEKLY", live_on: Date.new(2023, 2, 2))
-  end
+  let(:merchant) { create(:merchant, disbursement_frequency: "DAILY") }
 
   describe ".call" do
-    context "when orders fall on both boundaries of the weekly window" do
+    context "when the merchant has eligible orders" do
       let!(:orders) do
         [
-          create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: Date.new(2026, 8, 28)),
+          create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: processing_date),
           create(:merchant_order, merchant:, amount_cents: 43_321, ordered_on: processing_date)
         ]
       end
@@ -23,12 +21,12 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
 
       it "creates one deterministic disbursement for the merchant and date" do
         expect(merchant.disbursements.first).to have_attributes(
-          reference: "D20260903M#{merchant.id}",
+          reference: "D20260903M#{merchant.reference}",
           disbursed_on: processing_date
         )
       end
 
-      it "associates both boundary orders with the disbursement" do
+      it "associates eligible orders with the disbursement" do
         expect(orders.map { |order| order.reload.disbursement }).to all(eq(merchant.disbursements.first))
       end
 
@@ -37,12 +35,10 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
       end
     end
 
-    context "when orders fall outside the weekly window" do
-      let!(:orders) do
-        [
-          create(:merchant_order, merchant:, ordered_on: Date.new(2026, 8, 27)),
-          create(:merchant_order, merchant:, ordered_on: Date.new(2026, 9, 4))
-        ]
+    context "when an eligible order belongs to another merchant" do
+      let(:other_merchant) { create(:merchant, disbursement_frequency: "DAILY") }
+      let!(:other_order) do
+        create(:merchant_order, merchant: other_merchant, ordered_on: processing_date)
       end
 
       before do
@@ -50,12 +46,12 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
         described_class.call(merchant, processing_date)
       end
 
-      it "excludes orders before and after the weekly window" do
-        expect(orders.map { |order| order.reload.disbursement }).to all(be_nil)
+      it "does not include the other merchant's order" do
+        expect(other_order.reload.disbursement).to be_nil
       end
     end
 
-    context "when the merchant has no orders in the weekly window" do
+    context "when the merchant has no eligible orders" do
       it "does not create an empty disbursement" do
         described_class.call(merchant, processing_date)
 
@@ -63,7 +59,45 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
       end
     end
 
-    context "when the date is processed more than once" do
+    context "when the merchant is DAILY" do
+      let!(:orders) do
+        [
+          create(:merchant_order, merchant:, ordered_on: processing_date),
+          create(:merchant_order, merchant:, ordered_on: processing_date - 1),
+          create(:merchant_order, merchant:, ordered_on: processing_date + 1)
+        ]
+      end
+
+      before do
+        described_class.call(merchant, processing_date)
+      end
+
+      it "processes only orders from the processing date" do
+        expect(orders.map { |order| !order.reload.disbursement.nil? }).to eq([true, false, false])
+      end
+    end
+
+    context "when the merchant is WEEKLY" do
+      let(:merchant) { create(:merchant, disbursement_frequency: "WEEKLY") }
+      let!(:orders) do
+        [
+          create(:merchant_order, merchant:, ordered_on: processing_date - 6),
+          create(:merchant_order, merchant:, ordered_on: processing_date),
+          create(:merchant_order, merchant:, ordered_on: processing_date - 7),
+          create(:merchant_order, merchant:, ordered_on: processing_date + 1)
+        ]
+      end
+
+      before do
+        described_class.call(merchant, processing_date)
+      end
+
+      it "processes the inclusive seven-day window" do
+        expect(orders.map { |order| !order.reload.disbursement.nil? }).to eq([true, true, false, false])
+      end
+    end
+
+    context "when the same merchant and date are processed more than once" do
       let!(:order) do
         create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: processing_date)
       end
@@ -85,12 +119,10 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
   describe "merchant consistency" do
     subject(:processor) { described_class.new(merchant, processing_date) }
 
-    let(:eligible_orders) do
-      MerchantOrder.where(merchant:, ordered_on: (processing_date - 6)..processing_date)
-    end
+    let(:eligible_orders) { MerchantOrder.where(merchant:, ordered_on: processing_date) }
     let!(:orders) do
       [
-        create(:merchant_order, merchant:, ordered_on: Date.new(2026, 8, 28)),
+        create(:merchant_order, merchant:, ordered_on: processing_date),
         create(:merchant_order, merchant:, ordered_on: processing_date)
       ]
     end
@@ -98,7 +130,7 @@ RSpec.describe ProcessWeeklyMerchantDisbursement do
     before do
       allow(eligible_orders).to receive(:find_each).and_yield(orders.first).and_yield(orders.last)
       allow(MerchantOrder).to receive(:where)
-        .with(merchant:, ordered_on: (processing_date - 6)..processing_date)
+        .with(merchant:, ordered_on: processing_date)
         .and_return(eligible_orders)
       allow(orders.last).to receive(:update!).and_raise("processing failed")
     end

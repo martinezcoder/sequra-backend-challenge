@@ -15,20 +15,20 @@ RSpec.describe ProcessWeeklyDisbursements do
   end
 
   before do
-    allow(ProcessWeeklyMerchantDisbursement).to receive(:call)
+    allow(ProcessMerchantDisbursement).to receive(:call)
     described_class.call(processing_date)
   end
 
   it "delegates a WEEKLY merchant whose weekday matches" do
-    expect(ProcessWeeklyMerchantDisbursement).to have_received(:call).with(matching_merchant, processing_date)
+    expect(ProcessMerchantDisbursement).to have_received(:call).with(matching_merchant, processing_date)
   end
 
   it "does not delegate a WEEKLY merchant from another weekday" do
-    expect(ProcessWeeklyMerchantDisbursement)
+    expect(ProcessMerchantDisbursement)
       .not_to have_received(:call).with(different_weekday_merchant, processing_date)
   end
 
   it "does not delegate a DAILY merchant" do
-    expect(ProcessWeeklyMerchantDisbursement).not_to have_received(:call).with(daily_merchant, processing_date)
+    expect(ProcessMerchantDisbursement).not_to have_received(:call).with(daily_merchant, processing_date)
   end
 end
