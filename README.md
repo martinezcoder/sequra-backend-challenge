@@ -12,9 +12,21 @@ The implementation follows a baby-steps approach: start with the simplest useful
 
 ## Development environment
 
-A minimal Docker-based environment is planned to isolate runtime and infrastructure dependencies, including the Ruby version and any database services introduced later. It will also let reviewers set up and run the project without reproducing the developer's local environment.
+A minimal Docker-based environment isolates the Ruby runtime and project dependencies, so reviewers only need Docker with Docker Compose rather than a local Ruby installation.
 
-A small Makefile is also planned as a simple interface for common reviewer operations, particularly setup, tests, and other necessary development commands. Docker and Makefile support have not been implemented yet; commands will be documented when they exist.
+The following commands provide the complete current reviewer workflow:
+
+```sh
+make setup
+make test
+make run
+```
+
+`make setup` builds the development image, `make test` runs the complete RSpec suite, and `make run` executes the example Ruby program.
+
+### Ruby version
+
+Ruby 3.4.10 is pinned exactly for a reproducible, modern environment. Ruby 4 was considered and is not being avoided as unstable or unsuitable; the developer has not yet used it enough to justify adding a new major runtime version as another variable in a time-bounded challenge. Ruby 3.4.10 provides a current environment while keeping that variable out of scope.
 
 ## Architecture
 

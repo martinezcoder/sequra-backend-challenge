@@ -1,0 +1,4 @@
+.git
+.bundle
+coverage
+vendor/bundle
