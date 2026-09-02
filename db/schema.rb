@@ -10,9 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "disbursements", force: :cascade do |t|
+    t.date "disbursed_on", null: false
+    t.bigint "merchant_id", null: false
+    t.string "reference", null: false
+    t.index ["merchant_id", "disbursed_on"], name: "index_disbursements_on_merchant_id_and_disbursed_on", unique: true
+    t.index ["merchant_id"], name: "index_disbursements_on_merchant_id"
+    t.index ["reference"], name: "index_disbursements_on_reference", unique: true
+  end
 
   create_table "merchant_orders", force: :cascade do |t|
     t.integer "amount_cents", null: false
@@ -34,5 +43,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_130000) do
     t.index ["reference"], name: "index_merchants_on_reference", unique: true
   end
 
+  add_foreign_key "disbursements", "merchants"
   add_foreign_key "merchant_orders", "merchants"
 end
