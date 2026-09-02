@@ -27,12 +27,13 @@ make test
 make lint
 make load-merchants FILE=input_data/merchants.csv
 make load-merchant-orders FILE=input_data/orders.csv
+make process-disbursements DATE=2026-09-03
 make shell
 make console
 make run
 ```
 
-`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make process-disbursements DATE=YYYY-MM-DD` processes DAILY and eligible WEEKLY disbursements for that business date. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
@@ -49,6 +50,8 @@ Merchants are persisted before their orders so orders can later reference a merc
 Disbursements belong to merchants and have a unique reference and an explicit business date. A database constraint permits at most one disbursement per merchant and date. DAILY is the first implemented scheduling mode: processing a date delegates each DAILY merchant/date pair as an independent transactional unit, groups its orders into one disbursement, and stores the per-order commission as integer `fee_cents`. Eligible orders are iterated in ActiveRecord batches so memory usage does not depend on a merchant's daily order volume. This keeps orchestration separate from merchant-level processing without introducing a background-processing technology. The current fixed 1% commission, rounded upward to cents, is intentionally intermediate; the challenge's amount-dependent commission rules are not yet implemented.
 
 WEEKLY processing runs a merchant when the processing date has the same weekday as its `live_on` date. The challenge defines that weekday but not the exact order window; this implementation uses the seven calendar dates ending on the processing date, inclusive. Each merchant/date pair remains an independent transaction and eligible orders are processed in ActiveRecord batches.
+
+`ProcessDisbursements.call(date)` is the application-level entry point for a business date and is exposed through `make process-disbursements DATE=YYYY-MM-DD`. It runs DAILY and then WEEKLY processing sequentially; each delegated merchant/date unit retains its own transaction and idempotency guarantees.
 
 Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 

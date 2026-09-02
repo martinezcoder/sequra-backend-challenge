@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants run shell test
+.PHONY: console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants process-disbursements run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -19,6 +19,8 @@ help:
 		'                    Import merchants from a CSV file' \
 		'  make load-merchant-orders FILE=path/to/orders.csv' \
 		'                    Import merchant orders from a CSV file' \
+		'  make process-disbursements DATE=2026-09-03' \
+		'                    Process disbursements for a business date' \
 		'  make shell        Open a shell in the application container' \
 		'  make console      Open a Ruby console with the application loaded' \
 		'  make run          Run the example application'
@@ -50,6 +52,10 @@ load-merchants:
 load-merchant-orders:
 	@test -n "$(FILE)" || (printf '%s\n' 'FILE is required'; exit 1)
 	$(COMPOSE) run --rm app bundle exec ruby bin/load_merchant_orders "$(FILE)"
+
+process-disbursements:
+	@test -n "$(DATE)" || (printf '%s\n' 'DATE is required'; exit 1)
+	$(COMPOSE) run --rm app bundle exec ruby bin/process_disbursements "$(DATE)"
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb

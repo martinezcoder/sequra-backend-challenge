@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "date"
+
+abort "Usage: bundle exec ruby bin/process_disbursements YYYY-MM-DD" unless ARGV.one?
+
+begin
+  date = Date.iso8601(ARGV.first)
+rescue Date::Error
+  abort "Invalid date: #{ARGV.first.inspect}; expected YYYY-MM-DD"
+end
+
+require_relative "../config/environment"
+
+ProcessDisbursements.call(date)
