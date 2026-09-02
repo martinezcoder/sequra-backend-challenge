@@ -15,6 +15,11 @@
 - Introduce abstractions, patterns, layers, dependencies, services, or infrastructure only when they provide a clear benefit.
 - Treat the solution as production-quality challenge code, prioritizing clarity, correctness, maintainability, testing, and problem-solving over unnecessary sophistication.
 - Design, develop, test, and document changes with the discipline expected from a real-world feature.
+- After completing an implementation or configuration change, review `README.md` to determine whether its documented information is affected.
+- Update `README.md` only when necessary to keep it accurate and consistent with the current project; do not update it mechanically for every change.
+- Keep `README.md` concise and reviewer-focused, and omit implementation details that are not useful to reviewers.
+- Do not document planned behavior as if it were already implemented.
+- If a documented intention or architectural decision changes, update `README.md` to reflect the new decision and, when relevant, briefly explain the change.
 - Keep code easy to understand and explain in a technical interview.
 - Respect the repository's existing structure and style unless there is a clear reason to change them.
 - Do not make unrelated changes.
