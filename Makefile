@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants process-disbursements run shell test
+.PHONY: backfill-disbursements console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants process-disbursements run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -21,6 +21,8 @@ help:
 		'                    Import merchant orders from a CSV file' \
 		'  make process-disbursements DATE=2026-09-03' \
 		'                    Process disbursements for a business date' \
+		'  make backfill-disbursements' \
+		'                    Process all imported historical orders' \
 		'  make shell        Open a shell in the application container' \
 		'  make console      Open a Ruby console with the application loaded' \
 		'  make run          Run the example application'
@@ -56,6 +58,9 @@ load-merchant-orders:
 process-disbursements:
 	@test -n "$(DATE)" || (printf '%s\n' 'DATE is required'; exit 1)
 	$(COMPOSE) run --rm app bundle exec ruby bin/process_disbursements "$(DATE)"
+
+backfill-disbursements:
+	$(COMPOSE) run --rm app bundle exec ruby bin/backfill_disbursements
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb

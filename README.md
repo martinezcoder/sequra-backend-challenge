@@ -28,12 +28,13 @@ make lint
 make load-merchants FILE=input_data/merchants.csv
 make load-merchant-orders FILE=input_data/orders.csv
 make process-disbursements DATE=2026-09-03
+make backfill-disbursements
 make shell
 make console
 make run
 ```
 
-`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make process-disbursements DATE=YYYY-MM-DD` processes DAILY and eligible WEEKLY disbursements for that business date. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make process-disbursements DATE=YYYY-MM-DD` processes DAILY and eligible WEEKLY disbursements for that business date. `make backfill-disbursements` processes all imported historical orders by replaying that normal daily flow from the earliest order date through six days after the latest. The six extra days allow a final WEEKLY order to reach its merchant's next eligible weekday. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
