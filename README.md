@@ -70,6 +70,18 @@ Monetary values are represented by a small project-owned `Money` value object. R
 
 This keeps money explicit in the domain while introducing only the behavior needed at each step.
 
+## Performance and scalability considerations
+
+The historical backfill processes approximately 1.3 million orders. In the local development environment, this operation takes several tens of minutes. The current implementation deliberately favors simple, explicit, and transactional processing over premature concurrency or infrastructure.
+
+Each merchant disbursement is already modeled as an independent unit of work through `ProcessMerchantDisbursement`. This boundary would allow the processing strategy to evolve without changing the underlying business logic.
+
+A production-oriented implementation could enqueue merchant/date processing units as Sidekiq jobs backed by Redis, allowing multiple merchant disbursements to be processed concurrently. The Sidekiq concurrency level would need to be tuned together with the ActiveRecord connection pool and PostgreSQL capacity. Increasing worker concurrency without considering database connections, CPU, memory, and I/O could simply move the bottleneck to PostgreSQL or even reduce throughput.
+
+An additional and independent optimization would be to reduce database round-trips by persisting order updates in batches instead of issuing one `UPDATE` per order.
+
+These optimizations were intentionally left out of the challenge implementation because they introduce additional operational complexity. The current design keeps the business logic isolated so that asynchronous execution, parallelism, and bulk persistence can be introduced later without redesigning the domain processing flow.
+
 ## Decisions and evolution
 
 This README records the developer's current decisions and will evolve with the solution. Relevant technical decisions will be documented when they arise, while keeping this document concise and focused on reviewer needs. No web framework, background processor, or concurrency strategy has been selected yet.
