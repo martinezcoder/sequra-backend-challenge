@@ -15,6 +15,7 @@ ActiveRecord::Base.establish_connection(environment.to_sym)
 require_relative "../app/models/disbursement"
 require_relative "../app/models/merchant"
 require_relative "../app/models/merchant_order"
+require_relative "../app/models/monthly_fee"
 require_relative "../lib/money"
 require_relative "../lib/loaders/load_merchants"
 require_relative "../lib/loaders/load_merchant_orders"
