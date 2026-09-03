@@ -3,6 +3,12 @@
 require "spec_helper"
 
 RSpec.describe Money do
+  describe ".from_cents" do
+    it "preserves an integer-cent amount for presentation" do
+      expect(described_class.from_cents(1_029).to_s).to eq("10.29")
+    end
+  end
+
   describe ".from_euros" do
     it "converts zero euros to zero cents" do
       expect(described_class.from_euros("0.0").cents).to eq(0)

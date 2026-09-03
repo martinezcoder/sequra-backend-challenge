@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+abort "Usage: bundle exec ruby bin/report" unless ARGV.empty?
+
+require_relative "../config/environment"
+
+puts Reports::Annual.to_markdown

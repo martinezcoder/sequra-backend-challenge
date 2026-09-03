@@ -15,6 +15,10 @@ class Money
     new((euros.to_i * 100) + cents.ljust(2, "0").to_i)
   end
 
+  def self.from_cents(cents)
+    new(cents)
+  end
+
   def initialize(cents)
     @cents = cents
   end
