@@ -2,16 +2,16 @@
 
 require "spec_helper"
 
-RSpec.describe ProcessDisbursements do
+RSpec.describe Disbursements::Process do
   describe ".call" do
     let(:processing_date) { Date.new(2026, 9, 3) }
     let(:calls) { [] }
 
     before do
-      allow(ProcessDailyDisbursements).to receive(:call) do |date|
+      allow(Disbursements::ProcessDaily).to receive(:call) do |date|
         calls << [:daily, date]
       end
-      allow(ProcessWeeklyDisbursements).to receive(:call) do |date|
+      allow(Disbursements::ProcessWeekly).to receive(:call) do |date|
         calls << [:weekly, date]
       end
     end

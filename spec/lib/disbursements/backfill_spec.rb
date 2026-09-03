@@ -2,14 +2,14 @@
 
 require "spec_helper"
 
-RSpec.describe BackfillDisbursements do
+RSpec.describe Disbursements::Backfill do
   describe ".call" do
     let(:first_order_date) { Date.new(2026, 8, 30) }
     let(:last_order_date) { Date.new(2026, 9, 3) }
     let(:processed_dates) { [] }
 
     before do
-      allow(ProcessDisbursements).to receive(:call) { |date| processed_dates << date }
+      allow(Disbursements::Process).to receive(:call) { |date| processed_dates << date }
     end
 
     context "when merchant orders exist" do
@@ -36,7 +36,7 @@ RSpec.describe BackfillDisbursements do
       it "does not process any dates" do
         described_class.call
 
-        expect(ProcessDisbursements).not_to have_received(:call)
+        expect(Disbursements::Process).not_to have_received(:call)
       end
     end
   end

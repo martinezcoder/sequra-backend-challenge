@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe CommissionRules do
+RSpec.describe Commissions::Rules do
   describe ".rule_for" do
     it "returns the 1.00% rule below 50 euros" do
       expect(described_class.rule_for(4_999)).to include(rate_basis_points: 100)

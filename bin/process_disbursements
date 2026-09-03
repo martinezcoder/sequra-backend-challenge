@@ -13,4 +13,4 @@ end
 
 require_relative "../config/environment"
 
-ProcessDisbursements.call(date)
+Disbursements::Process.call(date)

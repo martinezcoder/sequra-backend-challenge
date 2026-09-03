@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ProcessDailyDisbursements do
+RSpec.describe Disbursements::ProcessDaily do
   let(:processing_date) { Date.new(2023, 2, 1) }
   let!(:daily_merchants) do
     [
@@ -13,17 +13,17 @@ RSpec.describe ProcessDailyDisbursements do
   let!(:weekly_merchant) { create(:merchant, disbursement_frequency: "WEEKLY") }
 
   before do
-    allow(ProcessMerchantDisbursement).to receive(:call)
+    allow(Disbursements::ProcessMerchant).to receive(:call)
     described_class.call(processing_date)
   end
 
   it "delegates each DAILY merchant and date to the merchant processor" do
     daily_merchants.each do |merchant|
-      expect(ProcessMerchantDisbursement).to have_received(:call).with(merchant, processing_date)
+      expect(Disbursements::ProcessMerchant).to have_received(:call).with(merchant, processing_date)
     end
   end
 
   it "does not delegate merchants with another frequency" do
-    expect(ProcessMerchantDisbursement).not_to have_received(:call).with(weekly_merchant, processing_date)
+    expect(Disbursements::ProcessMerchant).not_to have_received(:call).with(weekly_merchant, processing_date)
   end
 end

@@ -3,7 +3,7 @@
 require "open3"
 require "spec_helper"
 
-RSpec.describe ProcessDisbursements do
+RSpec.describe Disbursements::Process do
   subject(:result) { run_command(*arguments) }
 
   context "when the date is missing" do
@@ -37,7 +37,7 @@ RSpec.describe ProcessDisbursements do
   end
 
   def run_command(*)
-    executable = File.expand_path("../../bin/process_disbursements", __dir__)
+    executable = File.expand_path("../../../bin/process_disbursements", __dir__)
     Open3.capture3(Gem.ruby, executable, *)
   end
 end

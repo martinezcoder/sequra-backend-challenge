@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe ProcessMerchantDisbursement do
+RSpec.describe Disbursements::ProcessMerchant do
   let(:processing_date) { Date.new(2026, 9, 3) }
   let(:merchant) { create(:merchant, disbursement_frequency: "DAILY") }
 
@@ -116,7 +116,7 @@ RSpec.describe ProcessMerchantDisbursement do
     end
 
     context "when a commission calculator is injected" do
-      let(:commission_calculator) { class_double(CommissionCalculator, call: 77) }
+      let(:commission_calculator) { class_double(Commissions::Calculator, call: 77) }
       let!(:order) do
         create(:merchant_order, merchant:, amount_cents: 10_229, ordered_on: processing_date)
       end

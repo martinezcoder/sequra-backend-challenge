@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe CommissionCalculator do
+RSpec.describe Commissions::Calculator do
   describe ".call" do
     it "calculates a 1.00% fee below 50 euros" do
       expect(described_class.call(4_999)).to eq(50)
