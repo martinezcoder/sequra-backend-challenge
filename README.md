@@ -29,12 +29,13 @@ make load-merchants FILE=input_data/merchants.csv
 make load-merchant-orders FILE=input_data/orders.csv
 make process-disbursements DATE=2026-09-03
 make backfill-disbursements
+make backfill-monthly-fees
 make shell
 make console
 make run
 ```
 
-`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make process-disbursements DATE=YYYY-MM-DD` processes DAILY and eligible WEEKLY disbursements for that business date. `make backfill-disbursements` processes all imported historical orders by replaying that normal daily flow from the earliest order date through six days after the latest. The six extra days allow a final WEEKLY order to reach its merchant's next eligible weekday. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
+`make setup` builds the development image and prepares the databases. `make db-drop` drops the development and test databases, `make db-migrate` applies pending development migrations, `make db-rollback` reverts the latest development migration, `make test` runs the complete RSpec suite, and `make lint` checks Ruby and RSpec style with RuboCop. `make load-merchants FILE=path/to/merchants.csv` imports merchants, while `make load-merchant-orders FILE=path/to/orders.csv` imports their orders. `make process-disbursements DATE=YYYY-MM-DD` processes DAILY and eligible WEEKLY disbursements for that business date. `make backfill-disbursements` processes all imported historical orders by replaying that normal daily flow from the earliest order date through six days after the latest. The six extra days allow a final WEEKLY order to reach its merchant's next eligible weekday. `make backfill-monthly-fees` evaluates monthly fees from the first through the last completed disbursement month. `make shell` opens a shell in the application container, `make console` opens an interactive Ruby console with the application environment loaded, and `make run` executes the example Ruby program.
 
 ### Ruby version
 
@@ -59,6 +60,8 @@ Monthly commissions are attributed by `Disbursement#disbursed_on`, not by `Merch
 `Disbursements::Process.call(date)` is the application-level entry point for a business date and is exposed through `make process-disbursements DATE=YYYY-MM-DD`. It runs the separate DAILY and WEEKLY scheduling flows sequentially; both delegate selected merchants to the same merchant/date processing unit, which retains its own transaction and idempotency guarantees.
 
 For the historical dataset included in the challenge, `Disbursements::Backfill.call` replays this same daily processing flow across the required calendar range and is exposed through make backfill-disbursements. The backfill does not introduce separate business logic; it only orchestrates the existing date-based processor over historical dates.
+
+`MonthlyFees::Backfill.call`, exposed through `make backfill-monthly-fees`, derives its historical range from the first and last `Disbursement#disbursed_on` dates, consistently with monthly commission attribution. It evaluates every calendar month between those boundaries, including months without disbursements. Skipping an empty intervening month would be incorrect because a merchant with no completed-disbursement commissions in that month may still owe its configured minimum fee.
 
 Merchant imports synchronize records by `external_id`, creating missing merchants and updating existing ones. Each complete CSV is imported atomically because partially synchronized reference data would be misleading. A failure aborts the import and reports its row rather than introducing partial-success recovery infrastructure. Explicit locking is also omitted because concurrent imports are not currently required. Monetary CSV values are converted through `Money` and persisted as integer cents.
 

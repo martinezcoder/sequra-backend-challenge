@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: backfill-disbursements console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants process-disbursements run shell test
+.PHONY: backfill-disbursements backfill-monthly-fees console help setup db-drop db-migrate db-rollback lint load-merchant-orders load-merchants process-disbursements run shell test
 
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
@@ -23,6 +23,8 @@ help:
 		'                    Process disbursements for a business date' \
 		'  make backfill-disbursements' \
 		'                    Process all imported historical orders' \
+		'  make backfill-monthly-fees' \
+		'                    Process monthly fees across disbursement history' \
 		'  make shell        Open a shell in the application container' \
 		'  make console      Open a Ruby console with the application loaded' \
 		'  make run          Run the example application'
@@ -61,6 +63,9 @@ process-disbursements:
 
 backfill-disbursements:
 	$(COMPOSE) run --rm app bundle exec ruby bin/backfill_disbursements
+
+backfill-monthly-fees:
+	$(COMPOSE) run --rm app bundle exec ruby bin/backfill_monthly_fees
 
 run:
 	$(COMPOSE) run --rm app bundle exec ruby app.rb
