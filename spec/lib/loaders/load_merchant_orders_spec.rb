@@ -87,7 +87,7 @@ RSpec.describe LoadMerchantOrders do
       end
     end
 
-    context "when the merchant reference cannot be resolved" do
+    context "when the merchant reference cannot be resolved", :silence_stderr do
       let(:unresolved_row) { ["20b674c93ea6", "missing_merchant", "433.21", "2023-02-02"] }
 
       before do
@@ -114,7 +114,7 @@ RSpec.describe LoadMerchantOrders do
           .and raise_error(ActiveRecord::RecordNotFound)
       end
 
-      it "raises an error and rolls back the create", :aggregate_failures do
+      it "raises an error and rolls back the create", :aggregate_failures, :silence_stderr do
         expect { described_class.call(csv_file.path) }
           .to raise_error(ActiveRecord::RecordNotFound)
 
@@ -122,7 +122,7 @@ RSpec.describe LoadMerchantOrders do
       end
     end
 
-    context "when a later row is invalid after an existing order" do
+    context "when a later row is invalid after an existing order", :silence_stderr do
       let(:unresolved_row) { ["20b674c93ea6", "missing_merchant", "433.21", "2023-02-02"] }
 
       before do

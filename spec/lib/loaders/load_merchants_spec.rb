@@ -78,14 +78,14 @@ RSpec.describe LoadMerchants do
           .and raise_error(ArgumentError)
       end
 
-      it "raises an error and rolls back the create", :aggregate_failures do
+      it "raises an error and rolls back the create", :aggregate_failures, :silence_stderr do
         expect { described_class.call(csv_file.path) }.to raise_error(ArgumentError)
 
         expect(Merchant.exists?(external_id:)).to be(false)
       end
     end
 
-    context "when a later CSV row is invalid after an existing merchant" do
+    context "when a later CSV row is invalid after an existing merchant", :silence_stderr do
       let!(:merchant) { create(:merchant, external_id:, email: "old@example.com") }
 
       before do
@@ -99,7 +99,7 @@ RSpec.describe LoadMerchants do
       end
     end
 
-    context "when the CSV data is invalid" do
+    context "when the CSV data is invalid", :silence_stderr do
       before do
         write_csv(invalid_row)
       end
